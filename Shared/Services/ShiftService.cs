@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json.Linq;
 using Shared.Models;
-using Shared.Models.DTO.LocationDTO;
+using Shared.Models.DTO.ShiftDTO;
 using Shared.Services.IServices;
 using Shared.Utilities;
 using System;
@@ -12,23 +12,23 @@ using System.Threading.Tasks;
 
 namespace Shared.Services
 {
-    public class LocationService : BaseService, ILocationService
+    public class ShiftService : BaseService, IShiftService
     {
         private readonly IHttpClientFactory _clientFactory;
-        private string locationUrl;
-        public LocationService(IHttpClientFactory clientFactory, IConfiguration configuration) : base(clientFactory)
+        private string shiftUrl;
+        public ShiftService(IHttpClientFactory clientFactory, IConfiguration configuration) : base(clientFactory)
         {
             _clientFactory=clientFactory;
-            this.locationUrl = configuration.GetValue<string>("ServiceUrls:APIkey");
-            //this.locationUrl = "https://localhost:7001";
+            this.shiftUrl = configuration.GetValue<string>("ServiceUrls:APIkey");
+            //this.shiftUrl = "https://localhost:7001";
         }
-        public Task<T> CreateAsync<T>(LocationDTO dto)
+        public Task<T> CreateAsync<T>(ShiftDTO dto)
         {
             return SendAsync<T>(new APIRequest()
             {
                 apiType = SD.ApiType.POST,
                 Data = dto,
-                Url = locationUrl+"/api/LocationAPI",
+                Url = shiftUrl+"/api/ShiftAPI",
             });
         }
 
@@ -37,7 +37,7 @@ namespace Shared.Services
             return SendAsync<T>(new APIRequest()
             {
                 apiType = SD.ApiType.DELETE,
-                Url = locationUrl+"/api/LocationAPI/"+id,
+                Url = shiftUrl+"/api/ShiftAPI/"+id,
             });
         }
 
@@ -46,7 +46,7 @@ namespace Shared.Services
             return SendAsync<T>(new APIRequest()
             {
                 apiType = SD.ApiType.GET,
-                Url = locationUrl+"/api/LocationAPI",
+                Url = shiftUrl+"/api/ShiftAPI",
             });
         }
 
@@ -55,17 +55,17 @@ namespace Shared.Services
             return SendAsync<T>(new APIRequest()
             {
                 apiType = SD.ApiType.GET,
-                Url = locationUrl+"/api/LocationAPI/"+id,
+                Url = shiftUrl+"/api/ShiftAPI/"+id,
             });
         }
 
-        public Task<T> UpdateAsync<T>(UpdateLocationDTO dto)
+        public Task<T> UpdateAsync<T>(UpdateShiftDTO dto)
         {
             return SendAsync<T>(new APIRequest()
             {
                 apiType = SD.ApiType.PUT,
                 Data = dto,
-                Url = locationUrl+"/api/LocationAPI/"+dto.Id,
+                Url = shiftUrl+"/api/ShiftAPI/"+dto.Id,
             });
         }
     }

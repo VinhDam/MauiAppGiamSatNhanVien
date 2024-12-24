@@ -24,8 +24,11 @@ namespace API
                 options.UseSqlServer(connectionString));
 
             builder.Services.AddScoped<ILocationRepository, LocationRepository>();
+            builder.Services.AddScoped<IShiftRepository, ShiftRepository>();
 
             builder.Services.AddAutoMapper(typeof(MappingConfig));
+            builder.Services.AddDateOnlyTimeOnlyStringConverters();
+
 
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();

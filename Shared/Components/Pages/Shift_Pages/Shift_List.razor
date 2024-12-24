@@ -1,0 +1,151 @@
+﻿@page "/danhmuc/shift"
+@using MudBlazor
+@using Newtonsoft.Json
+@using Shared.Models
+@using Shared.Models.DTO.ShiftDTO
+@using Shared.Services.IServices
+@inject IShiftService _shiftService
+@inject IDialogService DialogService
+@inject IJSRuntime _JS
+
+<PageTitle>Ca làm việc</PageTitle>
+
+<MudDataGrid Items="Shifts"
+             Loading="IsProcessing"
+             Striped="true" Bordered="true"
+             Filterable="true" FilterMode="DataGridFilterMode.ColumnFilterMenu" FilterCaseSensitivity="DataGridFilterCaseSensitivity.Ignore"
+             Hideable="true" QuickFilter="@_quickFilter" Dense="true" Style="white-space:nowrap">
+    <ToolBarContent>
+        <MudText Typo="Typo.h6" Class="pe-3">Danh sách ca làm việc</MudText>
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Surface"
+                   OnClick="CreateShift">
+            <MudIcon Icon="@Icons.Material.Filled.Add" Class="me-2" />Thêm ca làm việc
+        </MudButton>
+        <MudSpacer />
+        <MudTextField @bind-Value="_searchString"
+                      Placeholder="Tìm kiếm"
+                      Adornment="Adornment.Start"
+                      Immediate="true"
+                      AdornmentIcon="@Icons.Material.Filled.Search"
+                      IconSize="Size.Medium"
+                      Class="mt-0" />
+    </ToolBarContent>
+    <Columns>
+        @if (!IsProcessing)
+        {
+            <PropertyColumn Property="x=>x.Name" Title="Ca làm việc" StickyLeft="true" />
+            <PropertyColumn Property="x=>x.Code" Title="Mã số" />
+            <PropertyColumn Property="x=>x.Description" Title="Mô tả" />
+            <PropertyColumn Property="x=>x.StartHour" Title="Giờ bắt đầu" />
+            <PropertyColumn Property="x=>x.EndHour" Title="Giờ kết thúc" />
+            <PropertyColumn Property="x=>x.Status" Title="Trạng thái" />
+            <PropertyColumn Property="x=>DateOnly.FromDateTime(x.CreateDate)" Title="Ngày Tạo" Filterable="false" />
+            <PropertyColumn Property="x=>DateOnly.FromDateTime(x.UpdateDate)" Title="Ngày cập nhật" Filterable="false" />
+            <TemplateColumn Title="Thao tác" StickyRight="true">
+                <CellTemplate>
+                    <div class="d-flex gap-2">
+                        <MudIconButton Icon="@Icons.Material.Rounded.Edit" OnClick="()=>UpdateShift(context.Item.Id)" />
+                        <MudIconButton Icon="@Icons.Material.Rounded.Delete" OnClick="()=>DeleteShift(context.Item.Id)" />
+                    </div>
+                </CellTemplate>
+            </TemplateColumn>
+        }
+    </Columns>
+    <PagerContent>
+        <MudDataGridPager T="Shift" />
+    </PagerContent>
+</MudDataGrid>
+
+@code {
+    public bool IsProcessing { get; set; } = true;
+    private IEnumerable<Shift> Shifts { get; set; } = new List<Shift>();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await LoadShifts();
+        }
+    }
+
+    private async Task LoadShifts()
+    {
+        IsProcessing = true;
+        StateHasChanged();
+        await Task.Delay(1500);
+        var response = await _shiftService.GetAllAsync<APIResponse>();
+        if (response != null && response.IsSuccess)
+        {
+            Shifts = JsonConvert.DeserializeObject<List<Shift>>(Convert.ToString(response.Result));
+        }
+        IsProcessing = false;
+        StateHasChanged();
+    }
+}
+
+@code {
+    private async Task CreateShift()
+    {
+        var parameters = new DialogParameters<CreateShift>
+            {
+                ["LoadPage"] = EventCallback.Factory.Create(this, LoadShifts)
+            };
+        var options = new DialogOptions { CloseOnEscapeKey = true, FullWidth = true };
+        await DialogService.ShowAsync<CreateShift>("Simple Dialog", parameters, options);
+    }
+}
+
+@code {
+    UpdateShiftDTO ShiftForUpdate = new UpdateShiftDTO();
+    private async Task UpdateShift(int id)
+    {
+        var request = await _shiftService.GetAsync<APIResponse>(id);
+        if (request != null && request.IsSuccess)
+        {
+            ShiftForUpdate = JsonConvert.DeserializeObject<UpdateShiftDTO>(Convert.ToString(request.Result));
+            var parameters = new DialogParameters<DeleteShift>
+                {
+                    ["ShiftForUpdate"] = ShiftForUpdate,
+                    ["LoadPage"] = EventCallback.Factory.Create(this, LoadShifts)
+                };
+            var options = new DialogOptions { CloseOnEscapeKey = true, FullWidth = true };
+            await DialogService.ShowAsync<UpdateShift>("", parameters, options);
+
+        }
+    }
+}
+
+@code {
+    Shift ShiftForDelete = new Shift();
+    private async Task DeleteShift(int id)
+    {
+        var request = await _shiftService.GetAsync<APIResponse>(id);
+        if (request != null && request.IsSuccess)
+        {
+            ShiftForDelete = JsonConvert.DeserializeObject<Shift>(Convert.ToString(request.Result));
+            var parameters = new DialogParameters<DeleteShift>
+                {
+                    ["ShiftForDelete"] = ShiftForDelete,
+                    ["LoadPage"] = EventCallback.Factory.Create(this, LoadShifts)
+                };
+            var options = new DialogOptions { CloseOnEscapeKey = true, FullWidth = true };
+            await DialogService.ShowAsync<DeleteShift>("", parameters, options);
+
+        }
+    }
+}
+
+@code {
+    private string _searchString;
+    private Func<Shift, bool> _quickFilter => x =>
+    {
+        if (string.IsNullOrWhiteSpace(_searchString))
+            return true;
+
+        if ($"{x.Code} {x.Name} {x.Description} {x.StartHour} {x.EndHour} {x.CreateDate} {x.UpdateDate}".Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        return false;
+    };
+}

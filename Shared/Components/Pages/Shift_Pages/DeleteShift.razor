@@ -1,0 +1,75 @@
+﻿@using MudBlazor
+@using Shared.Models
+@using Shared.Models.DTO.ShiftDTO
+@using Shared.Services.IServices
+@inject IShiftService _shiftService
+@inject ISnackbar Snackbar
+@inject IJSRuntime _JS
+
+<MudDialog>
+    <TitleContent>
+        Delete Shift Confirm
+    </TitleContent>
+    <DialogContent>
+        <div class="px-3">
+            <div class="py-2 col-12">
+                <label for="Name">Ca làm việc</label>
+                <InputText @bind-Value="ShiftForDelete.Name" class="form-control" id="Name" disabled />
+            </div>
+            <div class="py-2 col-12">
+                <label for="Code">Mã số</label>
+                <InputText @bind-Value="ShiftForDelete.Code" class="form-control" id="Code" disabled />
+            </div>
+            <div class="py-2 col-12">
+                <label for="Description">Mô tả</label>
+                <InputText @bind-Value="ShiftForDelete.Description" class="form-control" id="Description" disabled />
+            </div>
+            <div class="py-2 col-12">
+                <label for="StartHour">Bắt đầu</label>
+                <MudTimePicker Time="ShiftForDelete.StartHour.ToTimeSpan()" class="form-control" id="StartHour" disabled />
+            </div>
+            <div class="py-2 col-12">
+                <label for="EndHour">Kết thúc</label>
+                <MudTimePicker Time="ShiftForDelete.EndHour.ToTimeSpan()" class="form-control" id="EndHour" disabled />
+            </div>
+            <div class="py-2 col-12">
+                <label for="Status">Trạng thái</label>
+                <InputCheckbox @bind-Value="ShiftForDelete.Status" class="form-check" id="Status" disabled />
+            </div>
+            <div class="py-2 col-12">
+                <label for="Status">Ngày tạo</label>
+                <InputDate @bind-Value="ShiftForDelete.CreateDate" class="form-control" id="Status" disabled />
+            </div>
+        </div>
+    </DialogContent>
+    <DialogActions>
+        <MudButton ButtonType="ButtonType.Submit" Color="Color.Primary" Variant="Variant.Filled" OnClick="DeleteShiftConfirm">Delete</MudButton>
+        <MudButton ButtonType="ButtonType.Button" Color="Color.Warning" Variant="Variant.Filled" OnClick="Cancel">Cancel</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [Parameter]
+    public Shift ShiftForDelete { get; set; } = new Shift();
+    [Parameter]
+    public EventCallback LoadPage { get; set; }
+    [CascadingParameter]
+    private MudDialogInstance MudDialog { get; set; }
+
+    public async Task DeleteShiftConfirm()
+    {
+        var response = await _shiftService.DeleteAsync<APIResponse>(ShiftForDelete.Id);
+        if (response != null && response.IsSuccess)
+        {
+            ShiftForDelete = new Shift();
+            Snackbar.Add("Shift Deleted Successfully", Severity.Success);
+            MudDialog.Close();
+            await LoadPage.InvokeAsync();
+        }
+        else
+        {
+            Snackbar.Add(response.ErrorMessages.FirstOrDefault(), Severity.Error);
+        }
+    }
+    private void Cancel() => MudDialog.Cancel();
+}

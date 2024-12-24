@@ -1,0 +1,88 @@
+﻿@using MudBlazor
+@using Shared.Models
+@using Shared.Models.DTO.ShiftDTO
+@using Shared.Services.IServices
+@inject IShiftService _shiftService
+@inject ISnackbar Snackbar
+@inject IJSRuntime _JS
+
+<MudDialog>
+    <TitleContent>
+        Create Shift Form
+    </TitleContent>
+    <DialogContent>
+        <EditForm Model="Shift" FormName="ProductUpsertForm" OnValidSubmit="CreateShiftConfirm">
+            <DataAnnotationsValidator />
+            <div class="px-3">
+                <div class="py-2 col-12">
+                    <label for="Name">Ca làm việc</label>
+                    <InputText @bind-Value="Shift.Name" class="form-control" id="Name" />
+                    <ValidationMessage For="@(() => Shift.Name)" />
+                </div>
+                <div class="py-2 col-12">
+                    <label for="Code">Mã số</label>
+                    <InputText @bind-Value="Shift.Code" class="form-control" id="Code" />
+                    <ValidationMessage For="@(() => Shift.Code)" />
+                </div>
+                <div class="py-2 col-12">
+                    <label for="Description">Mô tả</label>
+                    <InputText @bind-Value="Shift.Description" class="form-control" id="Description" />
+                    <ValidationMessage For="@(() => Shift.Description)" />
+                </div>
+                <div class="py-2 col-12">
+                    <label for="StartHour">Bắt đầu</label>
+                    <MudTimePicker Time="Shift.StartHour.ToTimeSpan()"
+                                   TimeChanged="@((v)=>{Shift.StartHour = TimeOnly.FromTimeSpan(v.Value);})"
+                                   class="form-control" id="StartHour"
+                                   PickerVariant="PickerVariant.Dialog" />
+                    <ValidationMessage For="@(() => Shift.StartHour)" />
+                </div>
+                <div class="py-2 col-12">
+                    <label for="EndHour">Kết thúc</label>
+                    <MudTimePicker Time="Shift.EndHour.ToTimeSpan()"
+                                   TimeChanged="@((v)=>{Shift.EndHour = TimeOnly.FromTimeSpan(v.Value);})"
+                                   class="form-control" id="EndHour"
+                                   PickerVariant="PickerVariant.Dialog" />
+                    <ValidationMessage For="@(() => Shift.EndHour)" />
+                </div>
+                <div class="py-2 d-flex gap-3">
+                    <label for="Status">Hoạt động</label>
+                    <InputCheckbox @bind-Value="Shift.Status" class="form-check" id="Status" />
+                    <ValidationMessage For="@(() => Shift.Status)" />
+                </div>
+            </div>
+        </EditForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton ButtonType="ButtonType.Submit" Color="Color.Primary" Variant="Variant.Filled" OnClick="CreateShiftConfirm">Create</MudButton>
+        <MudButton ButtonType="ButtonType.Button" Color="Color.Error" Variant="Variant.Filled" OnClick="Cancel">Cancel</MudButton>
+    </DialogActions>
+</MudDialog>
+
+
+@code {
+    [Parameter]
+    public ShiftDTO Shift { get; set; } = new ShiftDTO();
+    [Parameter]
+    public EventCallback LoadPage { get; set; }
+    [CascadingParameter]
+    private MudDialogInstance MudDialog { get; set; }
+
+    public async Task CreateShiftConfirm()
+    {
+        var response = await _shiftService.CreateAsync<APIResponse>(Shift);
+        if (response != null && response.IsSuccess)
+        {
+            Shift = new ShiftDTO();
+            MudDialog.Close();
+            Snackbar.Add("Shift Created Successfully", Severity.Success);
+            await LoadPage.InvokeAsync();
+        }
+        else
+        {
+            Snackbar.Add(response.ErrorMessages.FirstOrDefault(), Severity.Error);
+
+        }
+    }
+    private void Cancel() => MudDialog.Cancel();
+}

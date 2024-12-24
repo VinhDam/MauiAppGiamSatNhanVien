@@ -118,7 +118,8 @@
     private async Task DeleteLocation(int id)
     {
         var request = await _locationService.GetAsync<APIResponse>(id);
-        if (request != null && request.IsSuccess){
+        if (request != null && request.IsSuccess)
+        {
             LocationForDelete = JsonConvert.DeserializeObject<UpdateLocationDTO>(Convert.ToString(request.Result));
             var parameters = new DialogParameters<DeleteLocation>
                 {

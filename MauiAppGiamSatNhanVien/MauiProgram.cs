@@ -7,7 +7,6 @@ using Shared.Services;
 using Microsoft.Maui.LifecycleEvents;
 using Microsoft.Extensions.Configuration;
 using System.Reflection;
-using Grpc.Core;
 
 namespace MauiAppGiamSatNhanVien
 {
@@ -29,6 +28,9 @@ namespace MauiAppGiamSatNhanVien
 
             builder.Services.AddHttpClient<ILocationService, LocationService>();
             builder.Services.AddScoped<ILocationService, LocationService>();
+
+            builder.Services.AddHttpClient<IShiftService, ShiftService>();
+            builder.Services.AddScoped<IShiftService, ShiftService>();
 
             builder.Services.AddScoped<IBreadcrumbItemDataProvider, BreadcrumbItemDataProvider>();
 
