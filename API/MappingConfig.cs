@@ -1,6 +1,5 @@
 ﻿using API.Models;
-using API.Models.DTO.LocationDTO;
-using API.Models.DTO.ShiftDTO;
+using API.Models.DTO;
 using AutoMapper;
 
 namespace API
@@ -10,10 +9,12 @@ namespace API
         public MappingConfig()
         {
             CreateMap<Location, LocationDTO>().ReverseMap();
-            CreateMap<Location, UpdateLocationDTO>().ReverseMap();
 
             CreateMap<Shift, ShiftDTO>().ReverseMap();
-            CreateMap<Shift, UpdateShiftDTO>().ReverseMap();
+
+            CreateMap<Department, DepartmentDTO>().ReverseMap();
+
+            CreateMap<Employee, EmployeeDTO>().ReverseMap();
         }
     }
 }

@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json.Linq;
 using Shared.Models;
-using Shared.Models.DTO.ShiftDTO;
+using Shared.Models.DTO;
 using Shared.Services.IServices;
 using Shared.Utilities;
 using System;
@@ -59,13 +59,13 @@ namespace Shared.Services
             });
         }
 
-        public Task<T> UpdateAsync<T>(UpdateShiftDTO dto)
+        public Task<T> UpdateAsync<T>(int id, ShiftDTO dto)
         {
             return SendAsync<T>(new APIRequest()
             {
                 apiType = SD.ApiType.PUT,
                 Data = dto,
-                Url = shiftUrl+"/api/ShiftAPI/"+dto.Id,
+                Url = shiftUrl+"/api/ShiftAPI/"+id,
             });
         }
     }

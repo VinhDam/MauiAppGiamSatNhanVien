@@ -10,29 +10,29 @@ using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace API.Repository
 {
-    public class ShiftRepository : IShiftRepository
+    public class EmployeeRepository : IEmployeeRepository
     {
         private readonly ApplicationDbContext _db;
         private readonly IMapper _mapper;
-        public ShiftRepository(ApplicationDbContext db, IMapper mapper)
+        public EmployeeRepository(ApplicationDbContext db, IMapper mapper)
         {
             _db=db;
             _mapper = mapper;
         }
 
-        public async Task<Shift> CreateAsync(ShiftDTO entity)
+        public async Task<Employee> CreateAsync(EmployeeDTO entity)
         {
-            var obj = _mapper.Map<Shift>(entity);
+            var obj = _mapper.Map<Employee>(entity);
             obj.CreateDate = DateTime.Now;
             obj.UpdateDate = obj.CreateDate;
-            await _db.Shift.AddAsync(obj);
+            await _db.Employees.AddAsync(obj);
             await _db.SaveChangesAsync();
             return obj;
         }
 
-        public async Task<List<Shift>> GetAllAsync(Expression<Func<Shift, bool>> filter = null, string includeProperties = null)
+        public async Task<List<Employee>> GetAllAsync(Expression<Func<Employee, bool>> filter = null, string includeProperties = null)
         {
-            IQueryable<Shift> query = _db.Shift;
+            IQueryable<Employee> query = _db.Employees;
 
             if (filter != null)
             {
@@ -48,9 +48,9 @@ namespace API.Repository
             return await query.ToListAsync();
         }
 
-        public async Task<Shift> GetAsync(Expression<Func<Shift, bool>> filter = null, bool tracked = true, string includeProperties = null)
+        public async Task<Employee> GetAsync(Expression<Func<Employee, bool>> filter = null, bool tracked = true, string includeProperties = null)
         {
-            IQueryable<Shift> query = _db.Shift;
+            IQueryable<Employee> query = _db.Employees;
 
             if (!tracked)
             {
@@ -70,20 +70,20 @@ namespace API.Repository
             return await query.FirstOrDefaultAsync();
         }
 
-        public async Task RemoveAsync(Shift entity)
+        public async Task RemoveAsync(Employee entity)
         {
-            _db.Shift.Remove(entity);
+            _db.Employees.Remove(entity);
             await _db.SaveChangesAsync();
         }
 
-        public async Task<Shift> UpdateAsync(int id, ShiftDTO entity)
+        public async Task<Employee> UpdateAsync(int id, EmployeeDTO entity)
         {
-            var objFromDb = _db.Shift.Where(u=>u.Id==id).AsNoTracking().FirstOrDefault();
-            var obj = _mapper.Map<Shift>(entity);
-            obj.Id = objFromDb.Id;
+            var objFromDb = await _db.Employees.Where(u=>u.Id == id).AsNoTracking().FirstOrDefaultAsync();
+            var obj = _mapper.Map<Employee>(entity);
+            obj.Id = id;
             obj.CreateDate = objFromDb.CreateDate;
             obj.UpdateDate = DateTime.Now;
-            _db.Shift.Update(obj);
+            _db.Employees.Update(obj);
             await _db.SaveChangesAsync();
             return obj;
         }

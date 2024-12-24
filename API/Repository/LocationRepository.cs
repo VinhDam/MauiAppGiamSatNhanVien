@@ -1,6 +1,6 @@
 ﻿using API.Data;
 using API.Models;
-using API.Models.DTO.LocationDTO;
+using API.Models.DTO;
 using API.Repository.IRepository;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
@@ -76,10 +76,11 @@ namespace API.Repository
             await _db.SaveChangesAsync();
         }
 
-        public async Task<Location> UpdateAsync(UpdateLocationDTO entity)
+        public async Task<Location> UpdateAsync(int id, LocationDTO entity)
         {
-            var objFromDb = _db.Location.Where(u=>u.Id==entity.Id).AsNoTracking().FirstOrDefault();
+            var objFromDb = await _db.Location.Where(u=>u.Id == id).AsNoTracking().FirstOrDefaultAsync();
             var obj = _mapper.Map<Location>(entity);
+            obj.Id = id;
             obj.CreateDate = objFromDb.CreateDate;
             obj.UpdateDate = DateTime.Now;
             _db.Location.Update(obj);

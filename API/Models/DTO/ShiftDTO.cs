@@ -1,8 +1,7 @@
-﻿namespace API.Models.DTO.ShiftDTO
+﻿namespace API.Models.DTO
 {
-    public class UpdateShiftDTO
+    public class ShiftDTO
     {
-        public int Id { get; set; }
         public string Code { get; set; }
         public string Name { get; set; }
         public string Description { get; set; }

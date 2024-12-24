@@ -1,4 +1,4 @@
-﻿namespace API.Models.DTO.LocationDTO
+﻿namespace Shared.Models.DTO
 {
     public class LocationDTO
     {

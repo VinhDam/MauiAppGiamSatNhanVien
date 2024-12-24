@@ -1,0 +1,172 @@
+﻿@page "/employee"
+@using MudBlazor
+@using Newtonsoft.Json
+@using Shared.Models
+@using Shared.Models.DTO
+@using Shared.Services.IServices
+@inject IEmployeeService _employeeService
+@inject IDepartmentService _departmentService
+@inject IShiftService _shiftService
+@inject IDialogService DialogService
+@inject IJSRuntime _JS
+
+<PageTitle>Nhân viên</PageTitle>
+
+<MudDataGrid Items="Employees"
+             Loading="IsProcessing"
+             Striped="true" Bordered="true"
+             Filterable="true" FilterMode="DataGridFilterMode.ColumnFilterMenu" FilterCaseSensitivity="DataGridFilterCaseSensitivity.Ignore"
+             Hideable="true" QuickFilter="@_quickFilter" Dense="true" Style="white-space:nowrap">
+    <ToolBarContent>
+        <MudText Typo="Typo.h6" Class="pe-3">Danh sách nhân viên</MudText>
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Surface"
+                   OnClick="CreateEmployee">
+            <MudIcon Icon="@Icons.Material.Filled.Add" Class="me-2" />Thêm nhân viên
+        </MudButton>
+        <MudSpacer />
+        <MudTextField @bind-Value="_searchString"
+                      Placeholder="Tìm kiếm"
+                      Adornment="Adornment.Start"
+                      Immediate="true"
+                      AdornmentIcon="@Icons.Material.Filled.Search"
+                      IconSize="Size.Medium"
+                      Class="mt-0" />
+    </ToolBarContent>
+    <Columns>
+        <PropertyColumn Property="x=>x.Name" Title="Họ tên" StickyLeft="true" />
+        <PropertyColumn Property="x=>x.Code" Title="Mã số" />
+        <PropertyColumn Property="x=>x.PhoneNumber" Title="Điện thoại" />
+        <PropertyColumn Property="x=>x.Email" Title="Email" />
+        <PropertyColumn Property="x=>x.CCCD" Title="CCCD" />
+        <PropertyColumn Property="x=>x.Description" Title="Mô tả" />
+        <PropertyColumn Property="x=>x.Department.Name" Title="Phòng ban" />
+        <PropertyColumn Property="x=>x.Shift.Name" Title="Ca làm việc" />
+        <PropertyColumn Property="x=>x.Status" Title="Trạng thái" />
+        <PropertyColumn Property="x=>DateOnly.FromDateTime(x.CreateDate)" Title="Ngày Tạo" />
+        <PropertyColumn Property="x=>DateOnly.FromDateTime(x.UpdateDate)" Title="Ngày cập nhật" />
+        <TemplateColumn Title="Thao tác" StickyRight="true">
+            <CellTemplate>
+                <div class="d-flex gap-2">
+                    <MudIconButton Icon="@Icons.Material.Rounded.Edit" OnClick="()=>UpdateEmployee(context.Item.Id)" />
+                    <MudIconButton Icon="@Icons.Material.Rounded.Delete" OnClick="()=>DeleteEmployee(context.Item.Id)" />
+                </div>
+            </CellTemplate>
+        </TemplateColumn>
+    </Columns>
+    <PagerContent>
+        <MudDataGridPager T="Employee" />
+    </PagerContent>
+</MudDataGrid>
+
+
+
+@code {
+    public bool IsProcessing { get; set; } = true;
+    private IEnumerable<Employee> Employees { get; set; } = new List<Employee>();
+    private IEnumerable<Department> Departments { get; set; } = new List<Department>();
+    private IEnumerable<Shift> Shifts { get; set; } = new List<Shift>();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await LoadEmployees();
+        }
+    }
+
+    private async Task LoadEmployees()
+    {
+        IsProcessing = true;
+        StateHasChanged();
+        await Task.Delay(1500);
+        var employeeResponse = await _employeeService.GetAllAsync<APIResponse>();
+        if (employeeResponse != null && employeeResponse.IsSuccess)
+        {
+            Employees = JsonConvert.DeserializeObject<List<Employee>>(Convert.ToString(employeeResponse.Result));
+        }
+        var departmentResponse = await _departmentService.GetAllAsync<APIResponse>();
+        if (departmentResponse != null && departmentResponse.IsSuccess)
+        {
+            Departments = JsonConvert.DeserializeObject<List<Department>>(Convert.ToString(departmentResponse.Result));
+        }
+        var shiftResponse = await _shiftService.GetAllAsync<APIResponse>();
+        if (shiftResponse != null && shiftResponse.IsSuccess)
+        {
+            Shifts = JsonConvert.DeserializeObject<List<Shift>>(Convert.ToString(shiftResponse.Result));
+        }
+        IsProcessing = false;
+        StateHasChanged();
+    }
+}
+
+@code {
+    private async Task CreateEmployee()
+    {
+        var parameters = new DialogParameters<CreateEmployee>
+            {
+                ["LoadPage"] = EventCallback.Factory.Create(this, LoadEmployees),
+                ["Departments"] = Departments,
+                ["Shifts"] = Shifts
+            };
+        var options = new DialogOptions { CloseOnEscapeKey = true, FullWidth = true };
+        await DialogService.ShowAsync<CreateEmployee>("", parameters, options);
+    }
+}
+
+@code {
+    EmployeeDTO EmployeeForUpdate = new EmployeeDTO();
+    private async Task UpdateEmployee(int id)
+    {
+        var request = await _employeeService.GetAsync<APIResponse>(id);
+        if (request != null && request.IsSuccess)
+        {
+            EmployeeForUpdate = JsonConvert.DeserializeObject<EmployeeDTO>(Convert.ToString(request.Result));
+            var parameters = new DialogParameters<UpdateEmployee>
+                {
+                    ["Id"] = id,
+                    ["EmployeeForUpdate"] = EmployeeForUpdate,
+                    ["LoadPage"] = EventCallback.Factory.Create(this, LoadEmployees),
+                    ["Departments"] = Departments,
+                    ["Shifts"] = Shifts
+                };
+            var options = new DialogOptions { CloseOnEscapeKey = true, FullWidth = true };
+            await DialogService.ShowAsync<UpdateEmployee>("", parameters, options);
+        }
+    }
+}
+
+@code {
+    Employee EmployeeForDelete = new Employee();
+    private async Task DeleteEmployee(int id)
+    {
+        var request = await _employeeService.GetAsync<APIResponse>(id);
+        if (request != null && request.IsSuccess)
+        {
+            EmployeeForDelete = JsonConvert.DeserializeObject<Employee>(Convert.ToString(request.Result));
+
+            var parameters = new DialogParameters<DeleteEmployee>
+                {
+                    ["EmployeeForDelete"] = EmployeeForDelete,
+                    ["LoadPage"] = EventCallback.Factory.Create(this, LoadEmployees),
+                };
+            var options = new DialogOptions { CloseOnEscapeKey = true, FullWidth = true };
+            await DialogService.ShowAsync<DeleteEmployee>("", parameters, options);
+
+        }
+    }
+}
+
+@code {
+    private string _searchString;
+    private Func<Employee, bool> _quickFilter => x =>
+    {
+        if (string.IsNullOrWhiteSpace(_searchString))
+            return true;
+
+        if ($"{x.Code} {x.Name} {x.PhoneNumber} {x.Email} {x.CCCD} {x.Description} {x.Department.Name} {x.Shift.Name} {x.CreateDate} {x.UpdateDate}".Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        return false;
+    };
+}

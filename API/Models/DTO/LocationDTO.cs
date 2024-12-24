@@ -1,12 +1,10 @@
-﻿namespace Shared.Models.DTO.ShiftDTO
+﻿namespace API.Models.DTO
 {
-    public class ShiftDTO
+    public class LocationDTO
     {
         public string Code { get; set; }
         public string Name { get; set; }
         public string Description { get; set; }
-        public TimeOnly StartHour { get; set; }
-        public TimeOnly EndHour { get; set; }
         public bool Status { get; set; }
     }
 }

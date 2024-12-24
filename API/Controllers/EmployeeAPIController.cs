@@ -10,27 +10,27 @@ namespace API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class ShiftAPIController : ControllerBase
+    public class EmployeeAPIController : ControllerBase
     {
         protected APIResponse _response;
-        private readonly IShiftRepository _dbShift;
+        private readonly IEmployeeRepository _dbEmployee;
         private readonly IMapper _mapper;
-        public ShiftAPIController(IShiftRepository dbShift, IMapper mapper)
+        public EmployeeAPIController(IEmployeeRepository dbEmployee, IMapper mapper)
         {
             this._response = new APIResponse();
-            _dbShift=dbShift;
+            _dbEmployee=dbEmployee;
             _mapper=mapper;
         }
 
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<ActionResult<APIResponse>> GetAllShifts()
+        public async Task<ActionResult<APIResponse>> GetAllEmployees()
         {
             try
             {
-                IEnumerable<Shift> shiftList;
-                shiftList = await _dbShift.GetAllAsync();
-                _response.Result = shiftList;
+                IEnumerable<Employee> locationList;
+                locationList = await _dbEmployee.GetAllAsync(includeProperties: "Department,Shift");
+                _response.Result = locationList;
                 _response.StatusCode = HttpStatusCode.OK;
                 return Ok(_response);
             }
@@ -44,11 +44,11 @@ namespace API.Controllers
             }
             return _response;
         }
-        [HttpGet("{id:int}", Name = "GetShift")]
+        [HttpGet("{id:int}", Name = "GetEmployee")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<APIResponse>> GetShift(int id)
+        public async Task<ActionResult<APIResponse>> GetEmployee(int id)
         {
             try
             {
@@ -58,14 +58,14 @@ namespace API.Controllers
                     _response.IsSuccess = false;
                     return BadRequest(_response);
                 }
-                var shift = await _dbShift.GetAsync(u => u.Id==id);
-                if (shift == null)
+                var location = await _dbEmployee.GetAsync(u => u.Id==id);
+                if (location == null)
                 {
                     _response.StatusCode = HttpStatusCode.NotFound;
                     _response.IsSuccess = false;
                     return NotFound(_response);
                 }
-                _response.Result = shift;
+                _response.Result = location;
                 _response.StatusCode = HttpStatusCode.OK;
                 return Ok(_response);
             }
@@ -84,24 +84,24 @@ namespace API.Controllers
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<APIResponse>> CreateShift([FromBody] ShiftDTO shiftDTO)
+        public async Task<ActionResult<APIResponse>> CreateEmployee([FromBody] EmployeeDTO locationDTO)
         {
             try
             {
-                if (await _dbShift.GetAsync(u => u.Name.ToLower() == shiftDTO.Name.ToLower())!=null)
+                if (await _dbEmployee.GetAsync(u => u.Name.ToLower() == locationDTO.Name.ToLower())!=null)
                 {
-                    ModelState.AddModelError("ErrorMessages", "Shift already exists!");
+                    ModelState.AddModelError("ErrorMessages", "Employee already exists!");
                     return BadRequest(ModelState);
                 }
 
-                if (shiftDTO == null)
+                if (locationDTO == null)
                 {
-                    return BadRequest(shiftDTO);
+                    return BadRequest(locationDTO);
                 }
-                var shift = await _dbShift.CreateAsync(shiftDTO);
-                _response.Result = shift;
+                var location = await _dbEmployee.CreateAsync(locationDTO);
+                _response.Result = location;
                 _response.StatusCode = HttpStatusCode.Created;
-                return CreatedAtRoute("GetShift", new { id = shift.Id }, _response);
+                return CreatedAtRoute("GetEmployee", new { id = location.Id }, _response);
             }
             catch (Exception ex)
             {
@@ -114,11 +114,11 @@ namespace API.Controllers
             return _response;
         }
 
-        [HttpDelete("{id:int}", Name = "DeleteShift")]
+        [HttpDelete("{id:int}", Name = "DeleteEmployee")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<APIResponse>> DeleteShift(int id)
+        public async Task<ActionResult<APIResponse>> DeleteEmployee(int id)
         {
             try
             {
@@ -126,12 +126,12 @@ namespace API.Controllers
                 {
                     return BadRequest();
                 }
-                var Shift = await _dbShift.GetAsync(v => v.Id == id);
-                if (Shift == null)
+                var Employee = await _dbEmployee.GetAsync(v => v.Id == id);
+                if (Employee == null)
                 {
                     return NotFound();
                 }
-                await _dbShift.RemoveAsync(Shift);
+                await _dbEmployee.RemoveAsync(Employee);
                 _response.StatusCode=HttpStatusCode.NoContent;
                 _response.IsSuccess = true;
                 return Ok(_response);
@@ -146,19 +146,19 @@ namespace API.Controllers
             }
             return _response;
         }
-        [HttpPut("{id:int}", Name = "UpdateShift")]
+        [HttpPut("{id:int}", Name = "UpdateEmployee")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<APIResponse>> UpdateShift(int id, [FromBody] ShiftDTO ShiftDTO)
+        public async Task<ActionResult<APIResponse>> UpdateEmployee(int id, [FromBody] EmployeeDTO locationDTO)
         {
             try
             {
-                if (ShiftDTO==null)
+                if (locationDTO==null)
                 {
                     return BadRequest();
                 }
 
-                _response.Result = await _dbShift.UpdateAsync(id, ShiftDTO);
+                _response.Result = await _dbEmployee.UpdateAsync(id, locationDTO);
                 _response.StatusCode = HttpStatusCode.NoContent;
                 _response.IsSuccess = true;
                 return Ok(_response);

@@ -25,6 +25,8 @@ namespace API
 
             builder.Services.AddScoped<ILocationRepository, LocationRepository>();
             builder.Services.AddScoped<IShiftRepository, ShiftRepository>();
+            builder.Services.AddScoped<IDepartmentRepository, DepartmentRepository>();
+            builder.Services.AddScoped<IEmployeeRepository, EmployeeRepository>();
 
             builder.Services.AddAutoMapper(typeof(MappingConfig));
             builder.Services.AddDateOnlyTimeOnlyStringConverters();

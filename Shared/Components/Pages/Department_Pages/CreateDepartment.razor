@@ -1,0 +1,82 @@
+﻿@using MudBlazor
+@using Shared.Models
+@using Shared.Models.DTO
+@using Shared.Services.IServices
+@inject IDepartmentService _departmentService
+@inject ISnackbar Snackbar
+@inject IJSRuntime _JS
+
+<MudDialog>
+    <TitleContent>
+        Create Department Form
+    </TitleContent>
+    <DialogContent>
+        <EditForm Model="Department" FormName="ProductCreateForm" OnValidSubmit="CreateDepartmentConfirm">
+            <DataAnnotationsValidator />
+            <div class="px-3">
+                <div class="py-2 col-12">
+                    <label for="Name">Tên phòng ban</label>
+                    <InputText @bind-Value="Department.Name" class="form-control" id="Name" />
+                </div>
+                <div class="py-2 col-12">
+                    <label for="Code">Mã số</label>
+                    <InputText @bind-Value="Department.Code" class="form-control" id="Code" />
+                </div>
+                <div class="py-2 col-12">
+                    <label for="Description">Mô tả</label>
+                    <InputText @bind-Value="Department.Description" class="form-control" id="Description" />
+                </div>
+                <div class="py-2 col-12">
+                    <label for="LocationId">Mô tả</label>
+                    <InputSelect @bind-Value="Department.LocationId" class="form-control" id="LocationId">
+                        <option value="" selected>--Chọn vị trí--</option>
+                        @foreach (var item in Locations)
+                        {
+                            <option value="@item.Id">@item.Name</option>
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="@(() => Department.LocationId)" />
+                </div>
+                <div class="py-2 d-flex gap-3">
+                    <label for="Status">Hoạt động</label>
+                    <InputCheckbox @bind-Value="Department.Status" class="form-check" id="Status" />
+                    <ValidationMessage For="@(() => Department.Status)" />
+                </div>
+            </div>
+            <hr />
+            <MudButton ButtonType="MudBlazor.ButtonType.Submit" Color="Color.Primary" Variant="Variant.Filled">Create</MudButton>
+            <MudButton ButtonType="MudBlazor.ButtonType.Button" Color="Color.Warning" Variant="Variant.Filled" OnClick="Cancel">Cancel</MudButton>
+        </EditForm>
+    </DialogContent>
+</MudDialog>
+
+@code {
+    [Parameter]
+    public DepartmentDTO Department { get; set; } = new DepartmentDTO();
+    [Parameter]
+    public IEnumerable<Location> Locations { get; set; } = new List<Location>();
+    [Parameter]
+    public EventCallback LoadPage { get; set; }
+    [CascadingParameter]
+    private MudDialogInstance MudDialog { get; set; }
+
+
+    public async Task CreateDepartmentConfirm()
+    {
+        var response = await _departmentService.CreateAsync<APIResponse>(Department);
+        if (response != null && response.IsSuccess)
+        {
+            Department = new DepartmentDTO();
+            MudDialog.Close();
+            Snackbar.Add("Department Created Successfully", Severity.Success);
+            await LoadPage.InvokeAsync();
+        }
+        else
+        {
+            Snackbar.Add(response.ErrorMessages.FirstOrDefault(), Severity.Error);
+        }
+
+
+    }
+    private void Cancel() => MudDialog.Cancel();
+}

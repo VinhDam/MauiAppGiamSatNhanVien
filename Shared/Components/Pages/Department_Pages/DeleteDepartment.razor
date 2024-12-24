@@ -1,0 +1,68 @@
+﻿@using MudBlazor
+@using Shared.Models
+@using Shared.Services.IServices
+@inject IDepartmentService _departmentService
+@inject ISnackbar Snackbar
+@inject IJSRuntime _JS
+
+<MudDialog>
+    <TitleContent>
+        Delete Department Confirm
+    </TitleContent>
+    <DialogContent>
+        <EditForm Model="DepartmentForDelete" FormName="LocationCreateForm" OnValidSubmit="DeleteDepartmentConfirm">
+            <DataAnnotationsValidator />
+            <div class="px-3">
+                <div class="py-2 col-12">
+                    <label for="Name">Tên phòng ban</label>
+                    <InputText @bind-Value="DepartmentForDelete.Name" class="form-control" id="Name" disabled />
+                </div>
+                <div class="py-2 col-12">
+                    <label for="Code">Mã số</label>
+                    <InputText @bind-Value="DepartmentForDelete.Code" class="form-control" id="Code" disabled />
+                </div>
+                <div class="py-2 col-12">
+                    <label for="Description">Mô tả</label>
+                    <InputText @bind-Value="DepartmentForDelete.Description" class="form-control" id="Description" disabled />
+                </div>
+                <div class="py-2 col-12">
+                    <label for="Location">Vị trí</label>
+                    <InputText @bind-Value="DepartmentForDelete.Location.Name" class="form-control" id="Location" disabled />
+                </div>
+                <div class="py-2 d-flex gap-3">
+                    <label for="Status">Hoạt động</label>
+                    <InputCheckbox @bind-Value="DepartmentForDelete.Status" class="form-check" id="Status" disabled />
+                </div>
+                <hr />
+                <MudButton ButtonType="MudBlazor.ButtonType.Submit" Color="Color.Primary" Variant="Variant.Filled">Delete</MudButton>
+                <MudButton ButtonType="MudBlazor.ButtonType.Button" Color="Color.Error" Variant="Variant.Filled" OnClick="Cancel">Cancel</MudButton>
+            </div>
+        </EditForm>
+    </DialogContent>
+</MudDialog>
+
+@code {
+    [Parameter]
+    public Department DepartmentForDelete { get; set; } = new Department();
+    [Parameter]
+    public EventCallback LoadPage { get; set; }
+    [CascadingParameter]
+    private MudDialogInstance MudDialog { get; set; }
+
+    public async Task DeleteDepartmentConfirm()
+    {
+        var response = await _departmentService.DeleteAsync<APIResponse>(DepartmentForDelete.Id);
+        if (response != null && response.IsSuccess)
+        {
+            DepartmentForDelete = new Department();
+            MudDialog.Close();
+            Snackbar.Add("Location Updated Successfully", Severity.Success);
+            await LoadPage.InvokeAsync();
+        }
+        else
+        {
+            Snackbar.Add(response.ErrorMessages.FirstOrDefault(), Severity.Error);
+        }
+    }
+    private void Cancel() => MudDialog.Cancel();
+}

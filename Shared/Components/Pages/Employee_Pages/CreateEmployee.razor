@@ -1,0 +1,101 @@
+﻿@using MudBlazor
+@using Shared.Models
+@using Shared.Models.DTO
+@using Shared.Services.IServices
+@inject IEmployeeService _employeeRepository
+@inject ISnackbar Snackbar
+@inject IJSRuntime _JS
+
+<MudDialog>
+    <TitleContent>
+        Create Department Form
+    </TitleContent>
+    <DialogContent>
+        <EditForm Model="Employee" FormName="ProductCreateForm" OnValidSubmit="CreateEmployeeConfirm">
+            <DataAnnotationsValidator />
+            <div class="px-3">
+                <div class="py-2 col-12">
+                    <label for="Name">Họ tên</label>
+                    <InputText @bind-Value="Employee.Name" class="form-control" id="Name" />
+                </div>
+                <div class="py-2 col-12">
+                    <label for="Code">Mã số</label>
+                    <InputText @bind-Value="Employee.Code" class="form-control" id="Code" />
+                </div>
+                <div class="py-2 col-12">
+                    <label for="Name">Điện thoại</label>
+                    <InputText @bind-Value="Employee.PhoneNumber" class="form-control" id="Name" />
+                </div>
+                <div class="py-2 col-12">
+                    <label for="Name">Email</label>
+                    <InputText @bind-Value="Employee.Email" class="form-control" id="Name" />
+                </div>
+                <div class="py-2 col-12">
+                    <label for="Name">CCCD</label>
+                    <InputText @bind-Value="Employee.CCCD" class="form-control" id="Name" />
+                </div>
+                <div class="py-2 col-12">
+                    <label for="Description">Mô tả</label>
+                    <InputText @bind-Value="Employee.Description" class="form-control" id="Description" />
+                </div>
+                <div class="py-2 col-12">
+                    <label for="LocationId">Phòng ban</label>
+                    <InputSelect @bind-Value="Employee.DepartmentId" class="form-control" id="LocationId">
+                        <option value="" selected>--Chọn phòng ban--</option>
+                        @foreach (var item in Departments)
+                        {
+                            <option value="@item.Id">@item.Name</option>
+                        }
+                    </InputSelect>
+                </div>
+                <div class="py-2 col-12">
+                    <label for="LocationId">Vị trí</label>
+                    <InputSelect @bind-Value="Employee.ShiftId" class="form-control" id="LocationId">
+                        <option value="" selected>--Chọn vị trí--</option>
+                        @foreach (var item in Shifts)
+                        {
+                            <option value="@item.Id">@item.Name</option>
+                        }
+                    </InputSelect>
+                </div>
+                <div class="py-2 d-flex gap-3">
+                    <label for="Status">Hoạt động</label>
+                    <InputCheckbox @bind-Value="Employee.Status" class="form-check" id="Status" />
+                </div>
+            </div>
+            <hr />
+            <MudButton ButtonType="ButtonType.Submit" Color="Color.Primary" Variant="Variant.Filled">Create</MudButton>
+            <MudButton ButtonType="ButtonType.Button" Color="Color.Warning" Variant="Variant.Filled" OnClick="Cancel">Cancel</MudButton>
+        </EditForm>
+    </DialogContent>
+</MudDialog>
+
+@code {
+    [Parameter]
+    public EmployeeDTO Employee { get; set; } = new EmployeeDTO();
+    [Parameter]
+    public IEnumerable<Department> Departments { get; set; } = new List<Department>();
+    [Parameter]
+    public IEnumerable<Shift> Shifts { get; set; } = new List<Shift>();
+    [Parameter]
+    public EventCallback LoadPage { get; set; }
+    [CascadingParameter]
+    private MudDialogInstance MudDialog { get; set; }
+
+    public async Task CreateEmployeeConfirm()
+    {
+        var response = await _employeeRepository.CreateAsync<APIResponse>(Employee);
+        if (response != null && response.IsSuccess)
+        {
+            Employee = new EmployeeDTO();
+            MudDialog.Close();
+            Snackbar.Add("Employee Created Successfully", Severity.Success);
+            await LoadPage.InvokeAsync();
+        }
+        else
+        {
+            Snackbar.Add(response.ErrorMessages.FirstOrDefault(), Severity.Error);
+        }
+    }
+    private void Cancel() => MudDialog.Cancel();
+}

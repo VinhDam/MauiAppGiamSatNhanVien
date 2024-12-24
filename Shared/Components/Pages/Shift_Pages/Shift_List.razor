@@ -2,7 +2,7 @@
 @using MudBlazor
 @using Newtonsoft.Json
 @using Shared.Models
-@using Shared.Models.DTO.ShiftDTO
+@using Shared.Models.DTO
 @using Shared.Services.IServices
 @inject IShiftService _shiftService
 @inject IDialogService DialogService
@@ -97,15 +97,16 @@
 }
 
 @code {
-    UpdateShiftDTO ShiftForUpdate = new UpdateShiftDTO();
+    ShiftDTO ShiftForUpdate = new ShiftDTO();
     private async Task UpdateShift(int id)
     {
         var request = await _shiftService.GetAsync<APIResponse>(id);
         if (request != null && request.IsSuccess)
         {
-            ShiftForUpdate = JsonConvert.DeserializeObject<UpdateShiftDTO>(Convert.ToString(request.Result));
+            ShiftForUpdate = JsonConvert.DeserializeObject<ShiftDTO>(Convert.ToString(request.Result));
             var parameters = new DialogParameters<DeleteShift>
                 {
+                    ["Id"] = id,
                     ["ShiftForUpdate"] = ShiftForUpdate,
                     ["LoadPage"] = EventCallback.Factory.Create(this, LoadShifts)
                 };

@@ -10,27 +10,29 @@ namespace API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class ShiftAPIController : ControllerBase
+    public class DepartmentAPIController : ControllerBase
     {
         protected APIResponse _response;
-        private readonly IShiftRepository _dbShift;
+        private readonly IDepartmentRepository _dbDepartment;
+        private readonly ILocationRepository _dbLocation;
         private readonly IMapper _mapper;
-        public ShiftAPIController(IShiftRepository dbShift, IMapper mapper)
+        public DepartmentAPIController(IDepartmentRepository dbDepartment, IMapper mapper, ILocationRepository locationRepository)
         {
             this._response = new APIResponse();
-            _dbShift=dbShift;
+            _dbDepartment=dbDepartment;
             _mapper=mapper;
+            _dbLocation=locationRepository;
         }
 
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<ActionResult<APIResponse>> GetAllShifts()
+        public async Task<ActionResult<APIResponse>> GetAllDepartments()
         {
             try
             {
-                IEnumerable<Shift> shiftList;
-                shiftList = await _dbShift.GetAllAsync();
-                _response.Result = shiftList;
+                IEnumerable<Department> locationList;
+                locationList = await _dbDepartment.GetAllAsync(includeProperties: "Location");
+                _response.Result = locationList;
                 _response.StatusCode = HttpStatusCode.OK;
                 return Ok(_response);
             }
@@ -44,11 +46,11 @@ namespace API.Controllers
             }
             return _response;
         }
-        [HttpGet("{id:int}", Name = "GetShift")]
+        [HttpGet("{id:int}", Name = "GetDepartment")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<APIResponse>> GetShift(int id)
+        public async Task<ActionResult<APIResponse>> GetDepartment(int id)
         {
             try
             {
@@ -58,14 +60,14 @@ namespace API.Controllers
                     _response.IsSuccess = false;
                     return BadRequest(_response);
                 }
-                var shift = await _dbShift.GetAsync(u => u.Id==id);
-                if (shift == null)
+                var location = await _dbDepartment.GetAsync(u => u.Id==id);
+                if (location == null)
                 {
                     _response.StatusCode = HttpStatusCode.NotFound;
                     _response.IsSuccess = false;
                     return NotFound(_response);
                 }
-                _response.Result = shift;
+                _response.Result = location;
                 _response.StatusCode = HttpStatusCode.OK;
                 return Ok(_response);
             }
@@ -84,24 +86,30 @@ namespace API.Controllers
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<APIResponse>> CreateShift([FromBody] ShiftDTO shiftDTO)
+        public async Task<ActionResult<APIResponse>> CreateDepartment([FromBody] DepartmentDTO locationDTO)
         {
             try
             {
-                if (await _dbShift.GetAsync(u => u.Name.ToLower() == shiftDTO.Name.ToLower())!=null)
+                if (await _dbDepartment.GetAsync(u => u.Name.ToLower() == locationDTO.Name.ToLower())!=null)
                 {
-                    ModelState.AddModelError("ErrorMessages", "Shift already exists!");
+                    ModelState.AddModelError("ErrorMessages", "Department already exists!");
                     return BadRequest(ModelState);
                 }
 
-                if (shiftDTO == null)
+                if (await _dbLocation.GetAsync(u => u.Id == locationDTO.LocationId) == null)
                 {
-                    return BadRequest(shiftDTO);
+                    ModelState.AddModelError("ErrorMessages", "Location ID is invalid!");
+                    return BadRequest(ModelState);
                 }
-                var shift = await _dbShift.CreateAsync(shiftDTO);
-                _response.Result = shift;
+
+                if (locationDTO == null)
+                {
+                    return BadRequest(locationDTO);
+                }
+                var location = await _dbDepartment.CreateAsync(locationDTO);
+                _response.Result = location;
                 _response.StatusCode = HttpStatusCode.Created;
-                return CreatedAtRoute("GetShift", new { id = shift.Id }, _response);
+                return CreatedAtRoute("GetDepartment", new { id = location.Id }, _response);
             }
             catch (Exception ex)
             {
@@ -114,11 +122,11 @@ namespace API.Controllers
             return _response;
         }
 
-        [HttpDelete("{id:int}", Name = "DeleteShift")]
+        [HttpDelete("{id:int}", Name = "DeleteDepartment")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<APIResponse>> DeleteShift(int id)
+        public async Task<ActionResult<APIResponse>> DeleteDepartment(int id)
         {
             try
             {
@@ -126,12 +134,12 @@ namespace API.Controllers
                 {
                     return BadRequest();
                 }
-                var Shift = await _dbShift.GetAsync(v => v.Id == id);
-                if (Shift == null)
+                var Department = await _dbDepartment.GetAsync(v => v.Id == id);
+                if (Department == null)
                 {
                     return NotFound();
                 }
-                await _dbShift.RemoveAsync(Shift);
+                await _dbDepartment.RemoveAsync(Department);
                 _response.StatusCode=HttpStatusCode.NoContent;
                 _response.IsSuccess = true;
                 return Ok(_response);
@@ -146,19 +154,25 @@ namespace API.Controllers
             }
             return _response;
         }
-        [HttpPut("{id:int}", Name = "UpdateShift")]
+        [HttpPut("{id:int}", Name = "UpdateDepartment")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<APIResponse>> UpdateShift(int id, [FromBody] ShiftDTO ShiftDTO)
+        public async Task<ActionResult<APIResponse>> UpdateDepartment(int id, [FromBody] DepartmentDTO departmentDTO)
         {
             try
             {
-                if (ShiftDTO==null)
+                if (departmentDTO==null)
                 {
                     return BadRequest();
                 }
 
-                _response.Result = await _dbShift.UpdateAsync(id, ShiftDTO);
+                if (await _dbLocation.GetAsync(u => u.Id == departmentDTO.LocationId) == null)
+                {
+                    ModelState.AddModelError("ErrorMessages", "Location ID is invalid!");
+                    return BadRequest(ModelState);
+                }
+
+                _response.Result = await _dbDepartment.UpdateAsync(id, departmentDTO);
                 _response.StatusCode = HttpStatusCode.NoContent;
                 _response.IsSuccess = true;
                 return Ok(_response);

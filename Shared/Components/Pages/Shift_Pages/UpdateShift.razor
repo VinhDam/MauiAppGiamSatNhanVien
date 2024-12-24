@@ -1,6 +1,6 @@
 ﻿@using MudBlazor
 @using Shared.Models
-@using Shared.Models.DTO.ShiftDTO
+@using Shared.Models.DTO
 @using Shared.Services.IServices
 @inject IShiftService _shiftService
 @inject IJSRuntime _JS
@@ -55,18 +55,20 @@
 
 @code {
     [Parameter]
-    public UpdateShiftDTO ShiftForUpdate { get; set; } = new UpdateShiftDTO();
+    public ShiftDTO ShiftForUpdate { get; set; } = new ShiftDTO();
     [Parameter]
     public EventCallback LoadPage { get; set; }
+    [Parameter]
+    public int Id { get; set; }
     [CascadingParameter]
     private MudDialogInstance MudDialog { get; set; }
 
     public async Task UpdateShiftConfirm()
     {
-        var response = await _shiftService.UpdateAsync<APIResponse>(ShiftForUpdate);
+        var response = await _shiftService.UpdateAsync<APIResponse>(Id, ShiftForUpdate);
         if (response != null && response.IsSuccess)
         {
-            ShiftForUpdate = new UpdateShiftDTO();
+            ShiftForUpdate = new ShiftDTO();
             MudDialog.Close();
             Snackbar.Add("Shift Updated Successfully", Severity.Success);
             await LoadPage.InvokeAsync();

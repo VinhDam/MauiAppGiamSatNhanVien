@@ -12,23 +12,23 @@ using System.Threading.Tasks;
 
 namespace Shared.Services
 {
-    public class LocationService : BaseService, ILocationService
+    public class DepartmentService : BaseService, IDepartmentService
     {
         private readonly IHttpClientFactory _clientFactory;
-        private string locationUrl;
-        public LocationService(IHttpClientFactory clientFactory, IConfiguration configuration) : base(clientFactory)
+        private string departmentUrl;
+        public DepartmentService(IHttpClientFactory clientFactory, IConfiguration configuration) : base(clientFactory)
         {
             _clientFactory=clientFactory;
-            this.locationUrl = configuration.GetValue<string>("ServiceUrls:APIkey");
-            //this.locationUrl = "https://localhost:7001";
+            this.departmentUrl = configuration.GetValue<string>("ServiceUrls:APIkey");
+            //this.departmentUrl = "https://localhost:7001";
         }
-        public Task<T> CreateAsync<T>(LocationDTO dto)
+        public Task<T> CreateAsync<T>(DepartmentDTO dto)
         {
             return SendAsync<T>(new APIRequest()
             {
                 apiType = SD.ApiType.POST,
                 Data = dto,
-                Url = locationUrl+"/api/LocationAPI",
+                Url = departmentUrl+"/api/DepartmentAPI",
             });
         }
 
@@ -37,7 +37,7 @@ namespace Shared.Services
             return SendAsync<T>(new APIRequest()
             {
                 apiType = SD.ApiType.DELETE,
-                Url = locationUrl+"/api/LocationAPI/"+id,
+                Url = departmentUrl+"/api/DepartmentAPI/"+id,
             });
         }
 
@@ -46,7 +46,7 @@ namespace Shared.Services
             return SendAsync<T>(new APIRequest()
             {
                 apiType = SD.ApiType.GET,
-                Url = locationUrl+"/api/LocationAPI",
+                Url = departmentUrl+"/api/DepartmentAPI",
             });
         }
 
@@ -55,17 +55,17 @@ namespace Shared.Services
             return SendAsync<T>(new APIRequest()
             {
                 apiType = SD.ApiType.GET,
-                Url = locationUrl+"/api/LocationAPI/"+id,
+                Url = departmentUrl+"/api/DepartmentAPI/"+id,
             });
         }
 
-        public Task<T> UpdateAsync<T>(int id, LocationDTO dto)
+        public Task<T> UpdateAsync<T>(int id, DepartmentDTO dto)
         {
             return SendAsync<T>(new APIRequest()
             {
                 apiType = SD.ApiType.PUT,
                 Data = dto,
-                Url = locationUrl+"/api/LocationAPI/"+id,
+                Url = departmentUrl+"/api/DepartmentAPI/"+id,
             });
         }
     }

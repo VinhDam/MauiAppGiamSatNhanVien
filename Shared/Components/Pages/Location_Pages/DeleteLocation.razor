@@ -1,6 +1,6 @@
 ﻿@using MudBlazor
 @using Shared.Models
-@using Shared.Models.DTO.LocationDTO
+@using Shared.Models.DTO
 @using Shared.Services.IServices
 @inject ILocationService _locationService
 @inject ISnackbar Snackbar
@@ -40,7 +40,7 @@
 
 @code {
     [Parameter]
-    public UpdateLocationDTO LocationForDelete { get; set; } = new UpdateLocationDTO();
+    public Location LocationForDelete { get; set; } = new Location();
     [Parameter]
     public EventCallback LoadPage { get; set; }
     [CascadingParameter]
@@ -51,7 +51,7 @@
         var response = await _locationService.DeleteAsync<APIResponse>(LocationForDelete.Id);
         if (response != null && response.IsSuccess)
         {
-            LocationForDelete = new UpdateLocationDTO();
+            LocationForDelete = new Location();
             MudDialog.Close();
             Snackbar.Add("Delete Location Successfully", Severity.Success);
             await LoadPage.InvokeAsync();

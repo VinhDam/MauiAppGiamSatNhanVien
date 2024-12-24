@@ -2,7 +2,7 @@
 @using MudBlazor
 @using Newtonsoft.Json
 @using Shared.Models
-@using Shared.Models.DTO.LocationDTO
+@using Shared.Models.DTO
 @using Shared.Services.IServices
 @inject ILocationService _locationService
 @inject IDialogService DialogService
@@ -95,15 +95,16 @@
 }
 
 @code {
-    UpdateLocationDTO LocationForUpdate = new UpdateLocationDTO();
+    LocationDTO LocationForUpdate = new LocationDTO();
     private async Task UpdateLocation(int id)
     {
         var request = await _locationService.GetAsync<APIResponse>(id);
         if (request != null && request.IsSuccess)
         {
-            LocationForUpdate = JsonConvert.DeserializeObject<UpdateLocationDTO>(Convert.ToString(request.Result));
+            LocationForUpdate = JsonConvert.DeserializeObject<LocationDTO>(Convert.ToString(request.Result));
             var parameters = new DialogParameters<UpdateLocation>
                 {
+                    ["Id"] = id,
                     ["LocationForUpdate"] = LocationForUpdate,
                     ["LoadPage"] = EventCallback.Factory.Create(this, LoadLocations)
                 };
@@ -114,13 +115,13 @@
 }
 
 @code {
-    UpdateLocationDTO LocationForDelete = new UpdateLocationDTO();
+    Location LocationForDelete = new Location();
     private async Task DeleteLocation(int id)
     {
         var request = await _locationService.GetAsync<APIResponse>(id);
         if (request != null && request.IsSuccess)
         {
-            LocationForDelete = JsonConvert.DeserializeObject<UpdateLocationDTO>(Convert.ToString(request.Result));
+            LocationForDelete = JsonConvert.DeserializeObject<Location>(Convert.ToString(request.Result));
             var parameters = new DialogParameters<DeleteLocation>
                 {
                     ["LocationForDelete"] = LocationForDelete,

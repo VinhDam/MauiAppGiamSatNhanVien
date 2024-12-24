@@ -1,5 +1,5 @@
 ﻿using API.Models;
-using API.Models.DTO.LocationDTO;
+using API.Models.DTO;
 using API.Repository.IRepository;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
@@ -118,7 +118,7 @@ namespace API.Controllers
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<APIResponse>> DeleteVilla(int id)
+        public async Task<ActionResult<APIResponse>> DeleteLocation(int id)
         {
             try
             {
@@ -126,12 +126,12 @@ namespace API.Controllers
                 {
                     return BadRequest();
                 }
-                var Villa = await _dbLocation.GetAsync(v => v.Id == id);
-                if (Villa == null)
+                var Location = await _dbLocation.GetAsync(v => v.Id == id);
+                if (Location == null)
                 {
                     return NotFound();
                 }
-                await _dbLocation.RemoveAsync(Villa);
+                await _dbLocation.RemoveAsync(Location);
                 _response.StatusCode=HttpStatusCode.NoContent;
                 _response.IsSuccess = true;
                 return Ok(_response);
@@ -149,16 +149,16 @@ namespace API.Controllers
         [HttpPut("{id:int}", Name = "UpdateLocation")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<APIResponse>> UpdateVilla(int id, [FromBody] UpdateLocationDTO updateLocationDTO)
+        public async Task<ActionResult<APIResponse>> UpdateLocation(int id, [FromBody] LocationDTO locationDTO)
         {
             try
             {
-                if (updateLocationDTO==null || id!=updateLocationDTO.Id)
+                if (locationDTO==null)
                 {
                     return BadRequest();
                 }
 
-                _response.Result = await _dbLocation.UpdateAsync(updateLocationDTO);
+                _response.Result = await _dbLocation.UpdateAsync(id, locationDTO);
                 _response.StatusCode = HttpStatusCode.NoContent;
                 _response.IsSuccess = true;
                 return Ok(_response);

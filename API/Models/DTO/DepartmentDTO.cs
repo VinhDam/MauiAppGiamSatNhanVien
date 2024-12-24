@@ -1,11 +1,13 @@
-﻿namespace API.Models.DTO.LocationDTO
+﻿using System.ComponentModel.DataAnnotations.Schema;
+
+namespace API.Models.DTO
 {
-    public class UpdateLocationDTO
+    public class DepartmentDTO
     {
-        public int Id { get; set; }
         public string Code { get; set; }
         public string Name { get; set; }
         public string Description { get; set; }
+        public int? LocationId { get; set; }
         public bool Status { get; set; }
     }
 }

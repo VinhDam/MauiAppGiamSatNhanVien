@@ -1,0 +1,79 @@
+﻿@using MudBlazor
+@using Shared.Models
+@using Shared.Models.DTO
+@using Shared.Services.IServices
+@inject IDepartmentService _departmentService
+@inject ISnackbar Snackbar
+@inject IJSRuntime _JS
+
+<MudDialog>
+    <TitleContent>
+        Create Department Form
+    </TitleContent>
+    <DialogContent>
+        <EditForm Model="DepartmentForUpdate" FormName="ProductCreateForm" OnValidSubmit="UpdateDepartmentConfirm">
+            <DataAnnotationsValidator />
+            <div class="px-3">
+                <div class="py-2 col-12">
+                    <label for="Name">Tên phòng ban</label>
+                    <InputText @bind-Value="DepartmentForUpdate.Name" class="form-control" id="Name" />
+                </div>
+                <div class="py-2 col-12">
+                    <label for="Code">Mã số</label>
+                    <InputText @bind-Value="DepartmentForUpdate.Code" class="form-control" id="Code" />
+                </div>
+                <div class="py-2 col-12">
+                    <label for="Description">Mô tả</label>
+                    <InputText @bind-Value="DepartmentForUpdate.Description" class="form-control" id="Description" />
+                </div>
+                <div class="py-2 col-12">
+                    <label for="LocationId">Mô tả</label>
+                    <InputSelect @bind-Value="DepartmentForUpdate.LocationId" class="form-control" id="LocationId">
+                        <option value="">--Chọn vị trí--</option>
+                        @foreach (var item in Locations)
+                        {
+                            <option value="@item.Id">@item.Name</option>
+                        }
+                    </InputSelect>
+                </div>
+                <div class="py-2 d-flex gap-3">
+                    <label for="Status">Hoạt động</label>
+                    <InputCheckbox @bind-Value="DepartmentForUpdate.Status" class="form-check" id="Status" />
+                </div>
+            </div>
+            <hr />
+            <MudButton ButtonType="MudBlazor.ButtonType.Submit" Color="Color.Primary" Variant="Variant.Filled">Update</MudButton>
+            <MudButton ButtonType="ButtonType.Button" Color="Color.Warning" Variant="Variant.Filled" OnClick="Cancel">Cancel</MudButton>
+        </EditForm>
+    </DialogContent>
+</MudDialog>
+
+@code {
+    [Parameter]
+    public DepartmentDTO DepartmentForUpdate { get; set; } = new DepartmentDTO();
+    [Parameter]
+    public IEnumerable<Location> Locations { get; set; } = new List<Location>();
+    [Parameter]
+    public EventCallback LoadPage { get; set; }
+    [Parameter]
+    public int Id { get; set; }
+    [CascadingParameter]
+    private MudDialogInstance MudDialog { get; set; }
+
+    public async Task UpdateDepartmentConfirm()
+    {
+        var response = await _departmentService.UpdateAsync<APIResponse>(Id, DepartmentForUpdate);
+        if (response != null && response.IsSuccess)
+        {
+            DepartmentForUpdate = new DepartmentDTO();
+            MudDialog.Close();
+            Snackbar.Add("Deparment Updated Successfully", Severity.Success);
+            await LoadPage.InvokeAsync();
+        }
+        else
+        {
+            Snackbar.Add(response.ErrorMessages.FirstOrDefault(), Severity.Error);
+        }
+    }
+    private void Cancel() => MudDialog.Cancel();
+}

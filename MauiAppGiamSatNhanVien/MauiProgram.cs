@@ -32,6 +32,12 @@ namespace MauiAppGiamSatNhanVien
             builder.Services.AddHttpClient<IShiftService, ShiftService>();
             builder.Services.AddScoped<IShiftService, ShiftService>();
 
+            builder.Services.AddHttpClient<IDepartmentService, DepartmentService>();
+            builder.Services.AddScoped<IDepartmentService, DepartmentService>();
+
+            builder.Services.AddHttpClient<IEmployeeService, EmployeeService>();
+            builder.Services.AddScoped<IEmployeeService, EmployeeService>();
+
             builder.Services.AddScoped<IBreadcrumbItemDataProvider, BreadcrumbItemDataProvider>();
 
             builder.Configuration

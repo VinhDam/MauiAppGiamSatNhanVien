@@ -1,6 +1,6 @@
 ﻿@using MudBlazor
 @using Shared.Models
-@using Shared.Models.DTO.LocationDTO
+@using Shared.Models.DTO
 @using Shared.Services.IServices
 @inject ILocationService _locationService
 @inject ISnackbar Snackbar
@@ -40,18 +40,20 @@
 
 @code {
     [Parameter]
-    public UpdateLocationDTO LocationForUpdate { get; set; } = new UpdateLocationDTO();
+    public LocationDTO LocationForUpdate { get; set; } = new LocationDTO();
     [Parameter]
     public EventCallback LoadPage { get; set; }
+    [Parameter]
+    public int Id { get; set; }
     [CascadingParameter]
     private MudDialogInstance MudDialog { get; set; }
 
     public async Task UpdateLocationConfirm()
     {
-        var response = await _locationService.UpdateAsync<APIResponse>(LocationForUpdate);
+        var response = await _locationService.UpdateAsync<APIResponse>(Id, LocationForUpdate);
         if (response != null && response.IsSuccess)
         {
-            LocationForUpdate = new UpdateLocationDTO();
+            LocationForUpdate = new LocationDTO();
             MudDialog.Close();
             Snackbar.Add("Location Updated Successfully", Severity.Success);
             await LoadPage.InvokeAsync();

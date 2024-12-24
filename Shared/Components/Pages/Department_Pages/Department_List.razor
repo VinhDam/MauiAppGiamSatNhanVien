@@ -1,0 +1,158 @@
+﻿@page "/danhmuc/department"
+@using MudBlazor
+@using Newtonsoft.Json
+@using Shared.Models
+@using Shared.Models.DTO
+@using Shared.Services.IServices
+@inject IDepartmentService _departmentService
+@inject ILocationService _locationService
+@inject IDialogService DialogService
+@inject IJSRuntime _JS
+
+<PageTitle>Phòng ban</PageTitle>
+
+<MudDataGrid Items="Departments"
+             Loading="IsProcessing"
+             Striped="true" Bordered="true"
+             Filterable="true" FilterMode="DataGridFilterMode.ColumnFilterMenu" FilterCaseSensitivity="DataGridFilterCaseSensitivity.Ignore"
+             Hideable="true" QuickFilter="@_quickFilter" Dense="true" Style="white-space:nowrap">
+    <ToolBarContent>
+        <MudText Typo="Typo.h6" Class="pe-3">Danh sách phòng ban</MudText>
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Surface"
+                   OnClick="CreateDepartment">
+            <MudIcon Icon="@Icons.Material.Filled.Add" Class="me-2" />Thêm phòng ban
+        </MudButton>
+        <MudSpacer />
+        <MudTextField @bind-Value="_searchString"
+                      Placeholder="Tìm kiếm"
+                      Adornment="Adornment.Start"
+                      Immediate="true"
+                      AdornmentIcon="@Icons.Material.Filled.Search"
+                      IconSize="Size.Medium"
+                      Class="mt-0" />
+    </ToolBarContent>
+    <Columns>
+        <PropertyColumn Property="x=>x.Name" Title="Phòng ban" StickyLeft="true" />
+        <PropertyColumn Property="x=>x.Code" Title="Mã số" />
+        <PropertyColumn Property="x=>x.Description" Title="Mô tả" />
+        <PropertyColumn Property="x=>x.Location.Name" Title="Vị trí" />
+        <PropertyColumn Property="x=>x.Status" Title="Trạng thái" />
+        <PropertyColumn Property="x=>DateOnly.FromDateTime(x.CreateDate)" Title="Ngày Tạo" />
+        <PropertyColumn Property="x=>DateOnly.FromDateTime(x.UpdateDate)" Title="Ngày cập nhật" />
+        <TemplateColumn Title="Thao tác" StickyRight="true">
+            <CellTemplate>
+                <div class="d-flex gap-2">
+                    <MudIconButton Icon="@Icons.Material.Rounded.Edit" OnClick="()=>UpdateDepartment(context.Item.Id)" />
+                    <MudIconButton Icon="@Icons.Material.Rounded.Delete" OnClick="()=>DeleteDepartment(context.Item.Id)" />
+                </div>
+            </CellTemplate>
+        </TemplateColumn>
+    </Columns>
+    <PagerContent>
+        <MudDataGridPager T="Department" />
+    </PagerContent>
+</MudDataGrid>
+
+@code {
+    public bool IsProcessing { get; set; } = true;
+    private IEnumerable<Department> Departments { get; set; } = new List<Department>();
+    public IEnumerable<Location> Locations { get; set; } = new List<Location>();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await LoadDepartments();
+        }
+    }
+
+    private async Task LoadDepartments()
+    {
+        IsProcessing = true;
+        StateHasChanged();
+        await Task.Delay(1500);
+        var departmentResponse = await _departmentService.GetAllAsync<APIResponse>();
+        if (departmentResponse != null && departmentResponse.IsSuccess)
+        {
+            Departments = JsonConvert.DeserializeObject<List<Department>>(Convert.ToString(departmentResponse.Result));
+        }
+        var locationResponse = await _locationService.GetAllAsync<APIResponse>();
+        if (locationResponse != null && locationResponse.IsSuccess)
+        {
+            Locations = JsonConvert.DeserializeObject<List<Location>>(Convert.ToString(locationResponse.Result));
+        }
+
+        IsProcessing = false;
+        StateHasChanged();
+    }
+}
+
+@code {
+    private async Task CreateDepartment()
+    {
+        var parameters = new DialogParameters<CreateDepartment>
+            {
+                ["LoadPage"] = EventCallback.Factory.Create(this, LoadDepartments),
+                ["Locations"] = Locations
+            };
+        var options = new DialogOptions { CloseOnEscapeKey = true, FullWidth = true };
+        await DialogService.ShowAsync<CreateDepartment>("", parameters, options);
+    }
+}
+
+@code {
+    DepartmentDTO DepartmentForUpdate = new DepartmentDTO();
+    private async Task UpdateDepartment(int id)
+    {
+        var request = await _locationService.GetAsync<APIResponse>(id);
+        if (request != null && request.IsSuccess)
+        {
+            DepartmentForUpdate = JsonConvert.DeserializeObject<DepartmentDTO>(Convert.ToString(request.Result));
+            var parameters = new DialogParameters<UpdateDepartment>
+                {
+                    ["Id"] = id,
+                    ["DepartmentForUpdate"] = DepartmentForUpdate,
+                    ["LoadPage"] = EventCallback.Factory.Create(this, LoadDepartments),
+                    ["Locations"] = Locations
+                };
+            var options = new DialogOptions { CloseOnEscapeKey = true, FullWidth = true };
+            await DialogService.ShowAsync<UpdateDepartment>("", parameters, options);
+
+        }
+    }
+}
+
+@code {
+    Department DepartmentForDelete = new Department();
+    private async Task DeleteDepartment(int id)
+    {
+        var request = await _locationService.GetAsync<APIResponse>(id);
+        if (request != null && request.IsSuccess)
+        {
+            DepartmentForDelete = JsonConvert.DeserializeObject<Department>(Convert.ToString(request.Result));
+            var parameters = new DialogParameters<DeleteDepartment>
+                {
+                    ["DepartmentForDelete"] = DepartmentForDelete,
+                    ["LoadPage"] = EventCallback.Factory.Create(this, LoadDepartments),
+                };
+            var options = new DialogOptions { CloseOnEscapeKey = true, FullWidth = true };
+            await DialogService.ShowAsync<DeleteDepartment>("", parameters, options);
+
+        }
+    }
+}
+
+@code {
+    private string _searchString;
+    private Func<Department, bool> _quickFilter => x =>
+    {
+        if (string.IsNullOrWhiteSpace(_searchString))
+            return true;
+
+        if ($"{x.Code} {x.Name} {x.Description} {x.Location.Name} {x.CreateDate} {x.UpdateDate}".Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        return false;
+    };
+}
