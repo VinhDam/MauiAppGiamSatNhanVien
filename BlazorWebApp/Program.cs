@@ -1,4 +1,9 @@
 using BlazorWebApp.Components;
+using MudBlazor.Services;
+using Shared.DataProvider.IDataProvider;
+using Shared.DataProvider;
+using Shared.Services.IServices;
+using Shared.Services;
 
 namespace BlazorWebApp
 {
@@ -12,7 +17,14 @@ namespace BlazorWebApp
             builder.Services.AddRazorComponents()
                 .AddInteractiveServerComponents();
 
-            
+            builder.Services.AddMudServices();
+
+            builder.Services.AddHttpClient<ILocationService, LocationService>();
+            builder.Services.AddScoped<ILocationService, LocationService>();
+
+            builder.Services.AddScoped<IBreadcrumbItemDataProvider, BreadcrumbItemDataProvider>();
+
+            builder.Services.AddHttpContextAccessor();
 
             var app = builder.Build();
 

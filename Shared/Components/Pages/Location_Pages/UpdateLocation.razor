@@ -1,0 +1,66 @@
+﻿@using MudBlazor
+@using Shared.Models
+@using Shared.Models.DTO.LocationDTO
+@using Shared.Services.IServices
+@inject ILocationService _locationService
+@inject ISnackbar Snackbar
+@inject IJSRuntime _JS
+
+<MudDialog>
+    <TitleContent>
+        Create Location Form
+    </TitleContent>
+    <DialogContent>
+        <EditForm Model="LocationForUpdate" FormName="LocationCreateForm" OnValidSubmit="UpdateLocationConfirm">
+            <DataAnnotationsValidator />
+            <div class="px-3">
+                <div class="py-2 col-12">
+                    <label for="Name">Tên vị trí</label>
+                    <InputText @bind-Value="LocationForUpdate.Name" class="form-control" id="Name" />
+                </div>
+                <div class="py-2 col-12">
+                    <label for="Code">Mã số</label>
+                    <InputText @bind-Value="LocationForUpdate.Code" class="form-control" id="Code" />
+                </div>
+                <div class="py-2 col-12">
+                    <label for="Description">Mô tả</label>
+                    <InputText @bind-Value="LocationForUpdate.Description" class="form-control" id="Description" />
+                </div>
+                <div class="py-2 d-flex gap-3">
+                    <label for="Status">Hoạt động</label>
+                    <InputCheckbox @bind-Value="LocationForUpdate.Status" class="form-check" id="Status" />
+                </div>
+                <hr />
+                <MudButton ButtonType="ButtonType.Submit" Color="Color.Primary" Variant="Variant.Filled">Update</MudButton>
+                <MudButton ButtonType="ButtonType.Button" Color="Color.Error" Variant="Variant.Filled" OnClick="Cancel">Cancel</MudButton>
+            </div>
+        </EditForm>
+    </DialogContent>
+</MudDialog>
+
+@code {
+    [Parameter]
+    public UpdateLocationDTO LocationForUpdate { get; set; } = new UpdateLocationDTO();
+    [Parameter]
+    public EventCallback LoadPage { get; set; }
+    [CascadingParameter]
+    private MudDialogInstance MudDialog { get; set; }
+
+    public async Task UpdateLocationConfirm()
+    {
+        var response = await _locationService.UpdateAsync<APIResponse>(LocationForUpdate);
+        if (response != null && response.IsSuccess)
+        {
+            LocationForUpdate = new UpdateLocationDTO();
+            MudDialog.Close();
+            Snackbar.Add("Location Updated Successfully", Severity.Success);
+            await LoadPage.InvokeAsync();
+        }
+        else
+        {
+            Snackbar.Add(response.ErrorMessages.FirstOrDefault(), Severity.Error);
+        }
+
+    }
+    private void Cancel() => MudDialog.Cancel();
+}

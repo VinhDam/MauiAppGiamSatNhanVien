@@ -1,17 +1,197 @@
 ﻿@inherits LayoutComponentBase
 
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
+@inject NavigationManager NavigationManager
+@inject IBreadcrumbItemDataProvider breadcrumbItemDataProvider
+@implements IBrowserViewportObserver
+@implements IAsyncDisposable
+@using MudBlazor
+@using MudBlazor.Services
+@using Shared.Data
+@using Shared.DataProvider.IDataProvider
 
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
-        </div>
+<MudThemeProvider />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
 
-        <article class="content px-4">
+<MudAppBar Elevation="0" Dense="true" Fixed="true" Color="Color.Info">
+    <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" />
+    <MudButton Href="" Variant="Variant.Text" Color="Color.Inherit">App quản lý nhân viên</MudButton>
+    <MudSpacer />
+    <MudButton Style="color:white;border-color:white;border-radius:20px;margin-right:5px"
+    Variant="Variant.Outlined" Href="/account/manage">
+        <MudIcon Icon="@Icons.Material.Filled.Person" />@UserString
+    </MudButton>
+    <form action="Account/Logout" method="post">
+        <AntiforgeryToken />
+        <input type="hidden" name="ReturnUrl" value="@currentUrl" />
+        <MudButton Style="color:white;border-color:white;border-radius:20px"
+        Variant="Variant.Outlined" ButtonType="ButtonType.Submit">
+            <MudIcon Icon="@Icons.Material.Filled.Logout" />@logoutString
+        </MudButton>
+    </form>
+</MudAppBar>
+<MudLayout>
+    <MudDrawer @bind-Open="@_open" Elevation="5" Variant="DrawerVariant.Responsive">
+        <MudDrawerHeader Dense="true" />
+        <MudNavMenu>
+            <MudTextField @bind-Value="_searchString"
+            Immediate="true"
+            TextChanged="Search"
+            Variant="Variant.Filled"
+            Style="height: calc(var(--mud-appbar-height) - var(--mud-appbar-height) / 4);"
+            Clearable="true"
+            Adornment="Adornment.End"
+            AdornmentIcon="@Icons.Material.Filled.Search" Label="Tìm kiếm" />
+            <MudList T="UrlItemName">
+                @if (searchItems.Any())
+                {
+                    foreach (var item in searchItems)
+                    {
+                        <MudListItem Dense="true" Href="@item.Url">
+                            @item.VietName
+                        </MudListItem>
+                    }
+                    <hr />
+                }
+            </MudList>
+            <MudNavLink Match="NavLinkMatch.All" Href="" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
+            <MudNavLink Match="NavLinkMatch.All" Href="employee" Icon="@Icons.Material.Filled.Person">Nhân viên</MudNavLink>
+            <MudNavGroup Title="Danh mục" Expanded="false" Icon="@Icons.Material.Filled.Menu">
+                <MudNavLink Match="NavLinkMatch.All" Href="danhmuc/department" Icon="@Icons.Material.Filled.Groups">Phòng ban</MudNavLink>
+                <MudNavLink Match="NavLinkMatch.All" Href="danhmuc/shift" Icon="@Icons.Material.Filled.AccessTime">Ca làm việc</MudNavLink>
+                <MudNavLink Match="NavLinkMatch.All" Href="danhmuc/location" Icon="@Icons.Material.Filled.LocationOn">Vị trí</MudNavLink>
+            </MudNavGroup>
+        </MudNavMenu>
+    </MudDrawer>
+    <MudMainContent Style="padding-top: calc(var(--mud-appbar-height) - var(--mud-appbar-height) / 4);">
+        <MudToolBar Style="background-color:#ececec;" Dense="true">
+            <MudBreadcrumbs Items="_items" Separator=">"></MudBreadcrumbs>
+        </MudToolBar>
+        <div class="px-3">
             @Body
-        </article>
-    </main>
-</div>
+        </div>
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    private bool _open = true;
+    private string? currentUrl;
+    private List<MudBlazor.BreadcrumbItem> _items = new List<MudBlazor.BreadcrumbItem>();
+    List<UrlItemName> Items = new List<UrlItemName>();
+
+    protected override void OnInitialized()
+    {
+        currentUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+        NavigationManager.LocationChanged += OnLocationChanged;
+        Items = breadcrumbItemDataProvider.GenerateBreadcrumbItemDataProviderItemDatas();
+        _items = new List<MudBlazor.BreadcrumbItem>
+            {
+                new MudBlazor.BreadcrumbItem("Home", href: ""),
+            };
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        currentUrl = NavigationManager.ToBaseRelativePath(e.Location);
+        CreateBreadcrumb();
+        _searchString = "";
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        NavigationManager.LocationChanged -= OnLocationChanged;
+    }
+
+    private void ToggleDrawer()
+    {
+        _open = !_open;
+    }
+
+    private void CreateBreadcrumb()
+    {
+        List<string> Urls = currentUrl.Split("/").ToList();
+        _items = new List<MudBlazor.BreadcrumbItem>
+            {
+                new MudBlazor.BreadcrumbItem("Home", href: "/"),
+            };
+        if (Urls.Count > 0)
+        {
+            foreach (var item in Items)
+            {
+                foreach (var UrlItem in Urls)
+                {
+                    if (UrlItem == item.EngName)
+                    {
+                        _items.Add(new MudBlazor.BreadcrumbItem(item.VietName, href: null, disabled: true));
+                    }
+                }
+            }
+        }
+    }
+}
+
+@code {
+    [Inject]
+    private IBrowserViewportService BrowserViewportService { get; set; }
+    private List<Breakpoint> _breakpointHistory = new();
+    private Breakpoint _start;
+
+    string UserString { get; set; } = "";
+    string logoutString { get; set; } = "";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await BrowserViewportService.SubscribeAsync(this, fireImmediately: true);
+        }
+
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    public async ValueTask DisposeAsync() => await BrowserViewportService.UnsubscribeAsync(this);
+
+    Guid IBrowserViewportObserver.Id { get; } = Guid.NewGuid();
+
+    ResizeOptions IBrowserViewportObserver.ResizeOptions { get; } = new()
+        {
+            ReportRate = 250,
+            NotifyOnBreakpointOnly = true
+        };
+
+    async Task IBrowserViewportObserver.NotifyBrowserViewportChangeAsync(BrowserViewportEventArgs browserViewportEventArgs)
+    {
+        if (browserViewportEventArgs.Breakpoint.ToString() == "Lg")
+        {
+            // var authstate = await _authStateProvider.GetAuthenticationStateAsync();
+            // var user = authstate.User;
+            UserString = "Name"; /* user.Identity.Name; */
+            logoutString = "logout";
+        }
+        else
+        {
+            UserString = string.Empty;
+            logoutString = string.Empty;
+        }
+        StateHasChanged();
+    }
+}
+
+@code {
+    string _searchString { get; set; }
+    List<UrlItemName> searchItems = new List<UrlItemName>();
+    private async Task Search()
+    {
+        if (string.IsNullOrEmpty(_searchString))
+        {
+            searchItems.Clear();
+        }
+        else
+        {
+            searchItems = Items.Where(u => u.VietName.Contains(_searchString, StringComparison.OrdinalIgnoreCase) &&
+                                           u.IsActive == true).ToList();
+        }
+    }
+}

@@ -1,4 +1,6 @@
-﻿namespace MauiAppGiamSatNhanVien
+﻿using Microsoft.Extensions.Configuration;
+
+namespace MauiAppGiamSatNhanVien
 {
     public partial class MainPage : ContentPage
     {

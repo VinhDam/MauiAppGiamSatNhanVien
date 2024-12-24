@@ -1,0 +1,146 @@
+﻿@page "/danhmuc/location"
+@using MudBlazor
+@using Newtonsoft.Json
+@using Shared.Models
+@using Shared.Models.DTO.LocationDTO
+@using Shared.Services.IServices
+@inject ILocationService _locationService
+@inject IDialogService DialogService
+@inject IJSRuntime _JS
+
+<PageTitle>Vị trí</PageTitle>
+
+<MudDataGrid Items="Locations"
+             Loading="IsProcessing"
+             Striped="true" Bordered="true"
+             Filterable="true" FilterMode="DataGridFilterMode.ColumnFilterMenu" FilterCaseSensitivity="DataGridFilterCaseSensitivity.Ignore"
+             Hideable="true" Dense="true" Style="white-space:nowrap">
+    <ToolBarContent>
+        <MudText Typo="Typo.h6" Class="pe-3">Danh sách phòng</MudText>
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Surface"
+                   OnClick="CreateLocation">
+            <MudIcon Icon="@Icons.Material.Filled.Add" Class="me-2" />Thêm phòng
+        </MudButton>
+        <MudSpacer />
+        <MudTextField @bind-Value="_searchString"
+                      Placeholder="Tìm kiếm"
+                      Adornment="Adornment.Start"
+                      Immediate="true"
+                      AdornmentIcon="@Icons.Material.Filled.Search"
+                      IconSize="Size.Medium"
+                      Class="mt-0" />
+    </ToolBarContent>
+    <Columns>
+        @if (!IsProcessing)
+        {
+            <PropertyColumn Property="x=>x.Name" Title="Vị trí" StickyLeft="true" />
+            <PropertyColumn Property="x=>x.Code" Title="Mã số" />
+            <PropertyColumn Property="x=>x.Description" Title="Mô tả" />
+            <PropertyColumn Property="x=>x.Status" Title="Trạng thái" />
+            <PropertyColumn Property="x=>DateOnly.FromDateTime(x.CreateDate)" Title="Ngày Tạo" Filterable="false" />
+            <PropertyColumn Property="x=>DateOnly.FromDateTime(x.UpdateDate)" Title="Ngày cập nhật" Filterable="false" />
+            <TemplateColumn Title="Thao tác" StickyRight="true">
+                <CellTemplate>
+                    <div class="d-flex gap-2">
+                        <MudIconButton Icon="@Icons.Material.Rounded.Edit" OnClick="()=>UpdateLocation(context.Item.Id)" />
+                        <MudIconButton Icon="@Icons.Material.Rounded.Delete" OnClick="()=>DeleteLocation(context.Item.Id)" />
+                    </div>
+                </CellTemplate>
+            </TemplateColumn>
+        }
+    </Columns>
+    <PagerContent>
+        <MudDataGridPager T="Location" />
+    </PagerContent>
+</MudDataGrid>
+
+@code {
+    public bool IsProcessing { get; set; } = true;
+    private IEnumerable<Location> Locations { get; set; } = new List<Location>();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await LoadLocations();
+        }
+    }
+
+    private async Task LoadLocations()
+    {
+        IsProcessing = true;
+        StateHasChanged();
+        await Task.Delay(1500);
+        var response = await _locationService.GetAllAsync<APIResponse>();
+        if (response != null && response.IsSuccess)
+        {
+            Locations = JsonConvert.DeserializeObject<List<Location>>(Convert.ToString(response.Result));
+        }
+        IsProcessing = false;
+        StateHasChanged();
+    }
+}
+
+@code {
+    private async Task CreateLocation()
+    {
+        var parameters = new DialogParameters<CreateLocation>
+            {
+                ["LoadPage"] = EventCallback.Factory.Create(this, LoadLocations)
+            };
+        var options = new DialogOptions { CloseOnEscapeKey = true, FullWidth = true };
+        await DialogService.ShowAsync<CreateLocation>("Simple Dialog", parameters, options);
+    }
+}
+
+@code {
+    UpdateLocationDTO LocationForUpdate = new UpdateLocationDTO();
+    private async Task UpdateLocation(int id)
+    {
+        var request = await _locationService.GetAsync<APIResponse>(id);
+        if (request != null && request.IsSuccess)
+        {
+            LocationForUpdate = JsonConvert.DeserializeObject<UpdateLocationDTO>(Convert.ToString(request.Result));
+            var parameters = new DialogParameters<UpdateLocation>
+                {
+                    ["LocationForUpdate"] = LocationForUpdate,
+                    ["LoadPage"] = EventCallback.Factory.Create(this, LoadLocations)
+                };
+            var options = new DialogOptions { CloseOnEscapeKey = true, FullWidth = true };
+            await DialogService.ShowAsync<UpdateLocation>("", parameters, options);
+        }
+    }
+}
+
+@code {
+    UpdateLocationDTO LocationForDelete = new UpdateLocationDTO();
+    private async Task DeleteLocation(int id)
+    {
+        var request = await _locationService.GetAsync<APIResponse>(id);
+        if (request != null && request.IsSuccess){
+            LocationForDelete = JsonConvert.DeserializeObject<UpdateLocationDTO>(Convert.ToString(request.Result));
+            var parameters = new DialogParameters<DeleteLocation>
+                {
+                    ["LocationForDelete"] = LocationForDelete,
+                    ["LoadPage"] = EventCallback.Factory.Create(this, LoadLocations)
+                };
+            var options = new DialogOptions { CloseOnEscapeKey = true, FullWidth = true };
+            await DialogService.ShowAsync<DeleteLocation>("", parameters, options);
+        }
+    }
+}
+
+@code {
+    private string _searchString;
+    private Func<Location, bool> _quickFilter => x =>
+    {
+        if (string.IsNullOrWhiteSpace(_searchString))
+            return true;
+
+        if ($"{x.Code} {x.Name} {x.Description} {x.Status} {x.CreateDate} {x.UpdateDate}".Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        return false;
+    };
+}
